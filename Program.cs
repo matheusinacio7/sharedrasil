@@ -7,6 +7,8 @@ namespace sharedrasil
     {
         static async Task Main(string[] args)
         {
+            DotEnv.LoadRoot();
+
             Console.WriteLine(@"
             ███████ ██   ██  █████  ██████  ███████ ██████  ██████   █████  ███████ ██ ██      
             ██      ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██ ██      ██ ██      
@@ -18,15 +20,15 @@ namespace sharedrasil
             LocalRepo localRepo = new LocalRepo();
 
             if(!localRepo.Exists) {
-                Console.WriteLine("You have a local repository. Would you like to create one? (Y/N)");
+                Console.WriteLine("You don't have the local repositories. Would you like to create one? (Y/N)");
                 string createRepo_Q = Console.ReadLine().ToLower();
 
                 if(createRepo_Q == "y" || createRepo_Q == "yes") {
-                    localRepo.Create();
+                    await localRepo.Create();
                 } else {
                     Console.WriteLine("Unfortunately, Sharedrasil needs local repositories to work with.");
                     Console.WriteLine("Press any key to exit...");
-                    Console.ReadKey(true);
+                    Console.ReadLine();
                     Environment.Exit(-1);
                 }
             }
@@ -34,8 +36,6 @@ namespace sharedrasil
             User user = new User();
             user.GetCredentials();
             Globals.currentUser = user;
-
-            await Github.GetAll();
         }
     }
 }

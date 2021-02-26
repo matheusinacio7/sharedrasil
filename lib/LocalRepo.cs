@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using LibGit2Sharp;
 
@@ -23,7 +24,7 @@ namespace sharedrasil
             }
         }
         
-        public void AddUser() {
+        public async Task AddUser() {
             string userPath = Path.Combine(Globals.LOCALREPO_PATH, "user.json");
 
             if(File.Exists(userPath)) {
@@ -37,15 +38,16 @@ namespace sharedrasil
                 File.Delete(userPath);
             }
 
-            Console.WriteLine("Please, enter your github username, email and access token.");
+            Console.WriteLine("\nPlease, enter your github username and email.");
             string username = CLIParser.AskAnyString("Username:");
             string email = CLIParser.AskAnyString("Email:");
-            string accessToken = CLIParser.AskAnyString("Access Token (you can use shift + insert to paste in the command line):");
+
+            Token token = await Github.Authenticate();
 
             User user = new User {
                 Username = username,
                 Email = email,
-                AccessToken = accessToken,
+                AccessToken = token,
             };
 
             string json = JsonConvert.SerializeObject(user, Formatting.Indented);
@@ -60,14 +62,14 @@ namespace sharedrasil
             }
         }
 
-        public void Create()
+        public async Task Create()
         {
             if(Exists) {
                 Console.WriteLine("You already have a local repository.");
                 return;
             }
 
-            Console.WriteLine($"Creating a new Git repository at {Globals.LOCALREPO_PATH}");
+            Console.WriteLine($"\nCreating a new Git repository at {Globals.LOCALREPO_PATH}");
             Repository.Init(Globals.LOCALREPO_PATH);
 
             if(!Exists) {
@@ -75,7 +77,7 @@ namespace sharedrasil
             }
             
             Console.WriteLine("Successfully created repository.");
-            AddUser();
+            await AddUser();
         }
 
     }

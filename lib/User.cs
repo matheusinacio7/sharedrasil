@@ -4,12 +4,17 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace sharedrasil {
+    public class Token {
+        public string Type {get; set;}
+        public string AccessToken {get; set;}
+    }
+
     public class User {
         public string Username {get;set;}
         public string Email {get;set;}
-        public string AccessToken {get;set;}
+        public Token AccessToken {get;set;}
 
-        public void GetCredentials() {
+        public async void GetCredentials() {
             string userPath = Path.Combine(Globals.LOCALREPO_PATH, "user.json");
             if(!File.Exists(userPath)) {
                 Console.WriteLine("You don't have a user created.");
@@ -19,7 +24,8 @@ namespace sharedrasil {
                     Console.WriteLine("Unfortunately, Sharedrasil needs a local user in order to comunicate with Github");
                     return;
                 } else {
-                    new LocalRepo().AddUser();
+                    LocalRepo localRepo = new LocalRepo();
+                    await localRepo.AddUser();
                 }
             }
             
