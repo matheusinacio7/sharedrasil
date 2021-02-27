@@ -34,8 +34,10 @@ namespace sharedrasil
             }
 
             User user = new User();
-            user.GetCredentials();
+            await user.GetCredentials();
             Globals.currentUser = user;
+
+            await Github.Root();
         }
     }
 }

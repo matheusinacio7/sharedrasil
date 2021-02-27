@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -14,7 +15,7 @@ namespace sharedrasil {
         public string Email {get;set;}
         public Token AccessToken {get;set;}
 
-        public async void GetCredentials() {
+        public async Task GetCredentials() {
             string userPath = Path.Combine(Globals.LOCALREPO_PATH, "user.json");
             if(!File.Exists(userPath)) {
                 Console.WriteLine("You don't have a user created.");

@@ -29,7 +29,7 @@ namespace sharedrasil {
         static string codeUrl = $"{loginUrl}/device/code";
 
         public async static Task<Token> Authenticate() {
-            Console.WriteLine("\nYou will receive a code, which you must enter in your browser to authorize sharedrasil to manage repositories on your behalf.");
+            Console.WriteLine("\nYou will receive a code, which you must enter in your browser in order to authorize sharedrasil to manage repositories on your behalf.");
 
             HttpClient client = new HttpClient();
 
@@ -55,28 +55,7 @@ namespace sharedrasil {
 
             Console.WriteLine("Waiting for validation...");
             Console.WriteLine("Please wait up to 10 seconds after validating.");
-            GithubTokenResponse tokenJson = new GithubTokenResponse();
-
-            do {
-                await Task.Delay(15);
-
-                content = JsonConvert.SerializeObject(new
-                {
-                    client_id = Environment.GetEnvironmentVariable("CLIENT_ID"),
-                    device_code = authJson.device_code,
-                    grant_type = "urn:ietf:params:oauth:grant-type:device_code",
-                });
-                stringContent = new StringContent(content, Encoding.UTF8, "application/json");
-
-                response = await client.PostAsync(authUrl, stringContent);
-                body = await response.Content.ReadAsStringAsync();
-                tokenJson = JsonConvert.DeserializeObject<GithubTokenResponse>(body);
-
-                if(!String.IsNullOrEmpty(tokenJson.access_token)) {
-                    break;
-                }
-
-            } while (true);
+            GithubTokenResponse tokenJson = AwaitForValidation(client, authJson).Result;
 
             Token token = new Token{
                 Type = tokenJson.token_type,
@@ -86,5 +65,38 @@ namespace sharedrasil {
             return token;
         }
 
+        public static async Task<GithubTokenResponse> AwaitForValidation(HttpClient client, GithubCodeResponse authJson) {
+            do {
+                await Task.Delay(authJson.interval * 1100);
+
+                string content = JsonConvert.SerializeObject(new
+                {
+                    client_id = Environment.GetEnvironmentVariable("CLIENT_ID"),
+                    device_code = authJson.device_code,
+                    grant_type = "urn:ietf:params:oauth:grant-type:device_code",
+                });
+                StringContent stringContent = new StringContent(content, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(authUrl, stringContent);
+                string body = await response.Content.ReadAsStringAsync();
+                GithubTokenResponse tokenJson = JsonConvert.DeserializeObject<GithubTokenResponse>(body);
+
+                if(!String.IsNullOrEmpty(tokenJson.access_token)) {
+                    return tokenJson;
+                }
+            } while (true);
+        }
+
+        public static async Task Root() {
+            HttpClient client = new HttpClient();
+
+            client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+            client.DefaultRequestHeaders.Add("Authorization", "bearer f29bd168c7ca907feee510a82d487ff593a48e34");
+            client.DefaultRequestHeaders.Add("User-Agent", "sharedrasil");
+
+            HttpResponseMessage response = await client.GetAsync(baseUrl);
+            string body = await response.Content.ReadAsStringAsync();
+            JsonConvert.DeserializeObject(body);
+        }
     }
 }
