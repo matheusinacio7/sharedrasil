@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 using System.Net.Http;
 using Newtonsoft.Json;
 
@@ -25,16 +27,20 @@ namespace sharedrasil {
         static string baseUrl = "https://api.github.com";
         static string loginUrl = "https://github.com/login";
 
+        static string userUrl = "https://api.github.com/user";
+        static string repoUrl = $"{baseUrl}/repos/{Globals.currentUser.Username}/{Globals.currentUser.Username}-worlds";
+
         static string authUrl = $"{loginUrl}/oauth/access_token";
         static string codeUrl = $"{loginUrl}/device/code";
 
-        public async static Task<Token> Authenticate() {
+        public async static Task<AccessToken> Authenticate() {
             Console.WriteLine("\nYou will receive a code, which you must enter in your browser in order to authorize sharedrasil to manage repositories on your behalf.");
 
             HttpClient client = new HttpClient();
 
             string content = JsonConvert.SerializeObject(new {
-                client_id = Environment.GetEnvironmentVariable("CLIENT_ID")
+                client_id = Environment.GetEnvironmentVariable("CLIENT_ID"),
+                scope = "repo",
             });
 
             client.DefaultRequestHeaders.Add("accept", "application/json");
@@ -57,9 +63,9 @@ namespace sharedrasil {
             Console.WriteLine("Please wait up to 10 seconds after validating.");
             GithubTokenResponse tokenJson = AwaitForValidation(client, authJson).Result;
 
-            Token token = new Token{
+            AccessToken token = new AccessToken{
                 Type = tokenJson.token_type,
-                AccessToken = tokenJson.access_token,
+                Token = tokenJson.access_token,
             };
 
             return token;
@@ -87,12 +93,80 @@ namespace sharedrasil {
             } while (true);
         }
 
-        public static async Task Root() {
+        public static HttpClient CreateBaseClient() {
             HttpClient client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-            client.DefaultRequestHeaders.Add("Authorization", "bearer f29bd168c7ca907feee510a82d487ff593a48e34");
+            client.DefaultRequestHeaders.Add("Authorization", $"token {Globals.currentUser.AccessToken.Token}");
             client.DefaultRequestHeaders.Add("User-Agent", "sharedrasil");
+
+            return client;
+        }
+
+        public static async Task<Boolean> CheckIfExists(HttpClient client = null) {
+            if(client is null)
+                client = CreateBaseClient();
+            
+            HttpResponseMessage response = await client.GetAsync(repoUrl);
+
+            Console.Write(response.StatusCode);
+
+            HttpStatusCode statusCode = response.StatusCode;
+
+            return !(statusCode == HttpStatusCode.NotFound);
+        } 
+
+        public static async Task CheckPermissions(HttpClient client = null) {
+            if(client is null)
+                client = CreateBaseClient();
+
+            HttpResponseMessage response = await client.GetAsync($"https://api.github.com/users/{Globals.currentUser.Username}");
+            Console.Write(response.Headers.ToString());
+        }
+
+        public static async Task Create(HttpClient client = null) {
+            if(client is null)
+                client = CreateBaseClient();
+
+            if(await CheckIfExists(client)) {
+                Console.WriteLine("\nThe remote repository already exists.");
+            }
+
+            string content = JsonConvert.SerializeObject(new
+            {
+                name = $"{Globals.currentUser.Username}-worlds",
+                @private = true,
+            });
+            StringContent stringContent = new StringContent(content, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await client.PostAsync($"{userUrl}/repos", stringContent);
+            Console.WriteLine("\nRemote repository created.");
+            Console.WriteLine("Doing first commit.");
+        }
+
+        public static async Task Push(HttpClient client = null) {
+            if(client is null)
+                client = CreateBaseClient();
+            
+            Byte[] bytes = File.ReadAllBytes($"{Globals.LOCALREPO_PATH}/README.md");
+            string file = Convert.ToBase64String(bytes);
+
+            string content = JsonConvert.SerializeObject(new
+            {
+                message = "Initial commit",
+                content = file
+            });
+            StringContent stringContent = new StringContent(content, Encoding.UTF8, "application/vnd.github.v3.object");
+
+            HttpResponseMessage response = await client.PostAsync($"{repoUrl}/contents/README.md", stringContent);
+            
+            string body = await response.Content.ReadAsStringAsync();
+            Console.Write(body);
+        }
+
+        public static async Task Root(HttpClient client = null) {
+            if(client is null)
+                client = CreateBaseClient();
 
             HttpResponseMessage response = await client.GetAsync(baseUrl);
             string body = await response.Content.ReadAsStringAsync();

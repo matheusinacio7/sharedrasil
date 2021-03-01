@@ -5,18 +5,18 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace sharedrasil {
-    public class Token {
+    public class AccessToken {
         public string Type {get; set;}
-        public string AccessToken {get; set;}
+        public string Token {get; set;}
     }
 
     public class User {
         public string Username {get;set;}
         public string Email {get;set;}
-        public Token AccessToken {get;set;}
+        public AccessToken AccessToken {get;set;}
 
         public async Task GetCredentials() {
-            string userPath = Path.Combine(Globals.LOCALREPO_PATH, "user.json");
+            string userPath = Path.Combine(Globals.CONFIG_PATH, "user.json");
             if(!File.Exists(userPath)) {
                 Console.WriteLine("You don't have a user created.");
                 Boolean wantsToCreate = CLIParser.AskYesOrNo("Would you like to create one now?");

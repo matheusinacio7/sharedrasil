@@ -25,7 +25,7 @@ namespace sharedrasil
         }
         
         public async Task AddUser() {
-            string userPath = Path.Combine(Globals.LOCALREPO_PATH, "user.json");
+            string userPath = Path.Combine(Globals.CONFIG_PATH, "user.json");
 
             if(File.Exists(userPath)) {
                 Console.WriteLine("There is already an user for sharedrasil in your local machine.");
@@ -42,7 +42,7 @@ namespace sharedrasil
             string username = CLIParser.AskAnyString("Username:");
             string email = CLIParser.AskAnyString("Email:");
 
-            Token token = await Github.Authenticate();
+            AccessToken token = await Github.Authenticate();
 
             User user = new User {
                 Username = username,
@@ -65,7 +65,7 @@ namespace sharedrasil
         public async Task Create()
         {
             if(Exists) {
-                Console.WriteLine("You already have a local repository.");
+                Console.WriteLine("You already have the local repositories.");
                 return;
             }
 
@@ -74,10 +74,27 @@ namespace sharedrasil
 
             if(!Exists) {
                 Console.WriteLine($"Could not create a Git repository at {Globals.LOCALREPO_PATH}. Please, check your permissions.");
+                return;
+            }
+
+            using(StreamReader sr = new StreamReader("./assets/README.md"))
+            using(StreamWriter sw = new StreamWriter(Path.Combine(Globals.LOCALREPO_PATH, "README.md"))) {
+                string line = sr.ReadLine();
+
+                while(line != null) {
+                    sw.WriteLine(line);
+                    line = sr.ReadLine();
+                }
+
+                sw.Close();
             }
             
             Console.WriteLine("Successfully created repository.");
             await AddUser();
+        }
+
+        public static void Commit() {
+            
         }
 
     }

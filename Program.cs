@@ -37,7 +37,7 @@ namespace sharedrasil
             await user.GetCredentials();
             Globals.currentUser = user;
 
-            await Github.Root();
+            await Github.Push();
         }
     }
 }
