@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace sharedrasil
@@ -37,7 +38,7 @@ namespace sharedrasil
             await user.GetCredentials();
             Globals.currentUser = user;
 
-            await Github.Push();
+            await CLIInterface.MainMenuLoop();            
         }
     }
 }

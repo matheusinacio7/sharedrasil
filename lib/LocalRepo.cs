@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using LibGit2Sharp;
 
 namespace sharedrasil
 {
@@ -13,7 +12,7 @@ namespace sharedrasil
         {
             get
             {
-                if (Repository.IsValid(Globals.LOCALREPO_PATH))
+                if (Directory.Exists($"{Globals.LOCALREPO_PATH}/.git"))
                 {
                     return true;
                 }
@@ -70,7 +69,12 @@ namespace sharedrasil
             }
 
             Console.WriteLine($"\nCreating a new Git repository at {Globals.LOCALREPO_PATH}");
-            Repository.Init(Globals.LOCALREPO_PATH);
+            string[] commands = {
+                $"cd {Globals.LOCALREPO_PATH}",
+                "git init"
+            };
+
+            ShellWorker.RunCommands(commands);
 
             if(!Exists) {
                 Console.WriteLine($"Could not create a Git repository at {Globals.LOCALREPO_PATH}. Please, check your permissions.");

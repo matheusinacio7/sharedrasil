@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
+using System.Diagnostics;
 using Newtonsoft.Json;
 
 namespace sharedrasil {
@@ -24,11 +25,12 @@ namespace sharedrasil {
 
 
     public static class Github {
-        static string baseUrl = "https://api.github.com";
+        static string baseUrl = "github.com";
+        static string baseApiUrl = "https://api.github.com";
         static string loginUrl = "https://github.com/login";
 
         static string userUrl = "https://api.github.com/user";
-        static string repoUrl = $"{baseUrl}/repos/{Globals.currentUser.Username}/{Globals.currentUser.Username}-worlds";
+        static string repoUrl = $"{baseApiUrl}/repos/{Globals.currentUser.Username}/{Globals.currentUser.Username}-worlds";
 
         static string authUrl = $"{loginUrl}/oauth/access_token";
         static string codeUrl = $"{loginUrl}/device/code";
@@ -134,7 +136,7 @@ namespace sharedrasil {
 
             string content = JsonConvert.SerializeObject(new
             {
-                name = $"{Globals.currentUser.Username}-worlds",
+                name = $"sharedrasil-{Globals.currentUser.Username}-worlds",
                 @private = true,
             });
             StringContent stringContent = new StringContent(content, Encoding.UTF8, "application/json");
@@ -142,33 +144,43 @@ namespace sharedrasil {
             HttpResponseMessage response = await client.PostAsync($"{userUrl}/repos", stringContent);
             Console.WriteLine("\nRemote repository created.");
             Console.WriteLine("Doing first commit.");
+
+            string username = Globals.currentUser.Username;
+            string token = Globals.currentUser.AccessToken.Token;
+            string credentials = $"{username}:{token}";
+
+            string[] commands = {
+                $"cd {Globals.LOCALREPO_PATH}",
+                $"git remote add origin https://{credentials}@{baseUrl}/{username}/sharedrasil-{username}-worlds",
+                "git add .",
+                "git commit -m \"Initial commit\"",
+                "git push -u origin main",
+            };
+
+            ShellWorker.RunCommands(commands);
+            Console.WriteLine("Finished first commit.");
         }
 
-        public static async Task Push(HttpClient client = null) {
-            if(client is null)
-                client = CreateBaseClient();
+        public static void Push() {            
+            string username = Globals.currentUser.Username;
+            string token = Globals.currentUser.AccessToken.Token;
+            string credentials = $"{username}:{token}";
             
-            Byte[] bytes = File.ReadAllBytes($"{Globals.LOCALREPO_PATH}/README.md");
-            string file = Convert.ToBase64String(bytes);
+            string[] commands = {
+                $"cd {Globals.LOCALREPO_PATH}",
+                "git add .",
+                $"git commit -m \"${username}-{DateTime.Now}\"",
+                "git push origin main",
+            };
 
-            string content = JsonConvert.SerializeObject(new
-            {
-                message = "Initial commit",
-                content = file
-            });
-            StringContent stringContent = new StringContent(content, Encoding.UTF8, "application/vnd.github.v3.object");
-
-            HttpResponseMessage response = await client.PostAsync($"{repoUrl}/contents/README.md", stringContent);
-            
-            string body = await response.Content.ReadAsStringAsync();
-            Console.Write(body);
+            ShellWorker.RunCommands(commands);
         }
 
         public static async Task Root(HttpClient client = null) {
             if(client is null)
                 client = CreateBaseClient();
 
-            HttpResponseMessage response = await client.GetAsync(baseUrl);
+            HttpResponseMessage response = await client.GetAsync(baseApiUrl);
             string body = await response.Content.ReadAsStringAsync();
             JsonConvert.DeserializeObject(body);
         }

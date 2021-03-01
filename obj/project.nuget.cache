@@ -1,12 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "bBjTXsKn8VmdbG8HxfqytKpNT0OYobs4cioOJ55YJrLSYkScpw6xX0QaC1+T7JBy1jHnAUvOr6Zyd0hJHxuR7Q==",
+  "dgSpecHash": "UZQgZWI9GsBjmuzPOPFklY8PSXV4MlRk6DXpSUKKygBD+IK1apLvvnTY/wR68GW2nqSIXgaO/1wvF8C5HPP4GQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\mrina\\Desktop\\sharedrasil\\sharedrasil.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\mrina\\.nuget\\packages\\libgit2sharp\\0.26.2\\libgit2sharp.0.26.2.nupkg.sha512",
-    "C:\\Users\\mrina\\.nuget\\packages\\libgit2sharp.nativebinaries\\2.0.306\\libgit2sharp.nativebinaries.2.0.306.nupkg.sha512",
-    "C:\\Users\\mrina\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512"
+    "C:\\Users\\mrina\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512",
+    "C:\\Users\\mrina\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\5.0.3\\microsoft.netcore.app.runtime.win-x64.5.0.3.nupkg.sha512",
+    "C:\\Users\\mrina\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\5.0.3\\microsoft.windowsdesktop.app.runtime.win-x64.5.0.3.nupkg.sha512",
+    "C:\\Users\\mrina\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\5.0.3\\microsoft.aspnetcore.app.runtime.win-x64.5.0.3.nupkg.sha512"
   ],
   "logs": []
 }
