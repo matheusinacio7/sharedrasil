@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace sharedrasil
@@ -14,8 +15,14 @@ namespace sharedrasil
             ██      ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██ ██      ██ ██      
             ███████ ███████ ███████ ██████  █████   ██   ██ ██████  ███████ ███████ ██ ██      
                  ██ ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██      ██ ██ ██      
-            ███████ ██   ██ ██   ██ ██   ██ ███████ ██████  ██   ██ ██   ██ ███████ ██ ███████ 
+            ███████ ██   ██ ██   ██ ██   ██ ███████ ██████  ██   ██ ██   ██ ███████ ██ ███████
+
+                                                                                 version 0.1.0 
             ");
+
+            User user = new User();
+            await user.GetCredentials();
+            Globals.currentUser = user;
 
             LocalRepo localRepo = new LocalRepo();
 
@@ -33,11 +40,7 @@ namespace sharedrasil
                 }
             }
 
-            User user = new User();
-            await user.GetCredentials();
-            Globals.currentUser = user;
-
-            await Github.Push();
+            await CLIInterface.MainMenuLoop();            
         }
     }
 }

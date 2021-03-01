@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using LibGit2Sharp;
 
 namespace sharedrasil
 {
@@ -13,7 +12,7 @@ namespace sharedrasil
         {
             get
             {
-                if (Repository.IsValid(Globals.LOCALREPO_PATH))
+                if (Directory.Exists($"{Globals.LOCALREPO_PATH}/.git"))
                 {
                     return true;
                 }
@@ -24,56 +23,45 @@ namespace sharedrasil
             }
         }
         
-        public async Task AddUser() {
-            string userPath = Path.Combine(Globals.CONFIG_PATH, "user.json");
 
-            if(File.Exists(userPath)) {
-                Console.WriteLine("There is already an user for sharedrasil in your local machine.");
-                Boolean wantsToContinue = CLIParser.AskYesOrNo("Would you like to delete it and create another one?");
-
-                if(!wantsToContinue) {
-                    return;
-                }
-
-                File.Delete(userPath);
-            }
-
-            Console.WriteLine("\nPlease, enter your github username and email.");
-            string username = CLIParser.AskAnyString("Username:");
-            string email = CLIParser.AskAnyString("Email:");
-
-            AccessToken token = await Github.Authenticate();
-
-            User user = new User {
-                Username = username,
-                Email = email,
-                AccessToken = token,
+        public static void Backup() {
+            string[] commands = {
+                $"cd \"{Globals.LOCALREPO_PATH}\"",
+                "git add .",
+                $"git commit -m \"Local backup\"",
             };
 
-            string json = JsonConvert.SerializeObject(user, Formatting.Indented);
-
-            using(StreamWriter sw = new StreamWriter(userPath)) {
-                sw.Write(json);
-            }
-
-            if(File.Exists(userPath)) {
-               Console.WriteLine($"Successfully created user. You can change your user by editing {userPath}.");
-               Console.WriteLine("You can also run 'add user' command at any time to go through this proccess again.");
-            }
+            ShellWorker.RunCommands(commands);
+            Console.WriteLine("Finished local backup");
         }
 
         public async Task Create()
         {
             if(Exists) {
                 Console.WriteLine("You already have the local repositories.");
-                return;
+                bool wantsToDeleteTheRepository = CLIParser.AskYesOrNo("Do you want to remove them? This will destroy all backups, but not your current files.");
+                
+                if(!wantsToDeleteTheRepository) {
+                    return;
+                } else {
+                    Console.WriteLine("For now, it's not possible to delete the repository through the command line.");
+                    return;
+                }
+
             }
 
             Console.WriteLine($"\nCreating a new Git repository at {Globals.LOCALREPO_PATH}");
-            Repository.Init(Globals.LOCALREPO_PATH);
+            string[] commands = {
+                $"cd \"{Globals.LOCALREPO_PATH}\"",
+                "git init",
+                $"git config user.name \"{Globals.currentUser.Username}\"",
+                $"git config user.email \"{Globals.currentUser.Email}\"",
+            };
+
+            ShellWorker.RunCommands(commands);
 
             if(!Exists) {
-                Console.WriteLine($"Could not create a Git repository at {Globals.LOCALREPO_PATH}. Please, check your permissions.");
+                Console.WriteLine($"Could not create a Git repository at \"{Globals.LOCALREPO_PATH}\". Please, check if: \n- You have Git installed;\n- The app has permission to access your command prompt, git, and the folder");
                 return;
             }
 
@@ -90,7 +78,8 @@ namespace sharedrasil
             }
             
             Console.WriteLine("Successfully created repository.");
-            await AddUser();
+            User user = new User();
+            await user.Create();
         }
 
         public static void Commit() {
