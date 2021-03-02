@@ -78,8 +78,6 @@ namespace sharedrasil
             }
             
             Console.WriteLine("Successfully created repository.");
-            User user = new User();
-            await user.Create();
         }
 
         public static void Commit() {

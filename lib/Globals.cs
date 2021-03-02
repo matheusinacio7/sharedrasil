@@ -11,6 +11,8 @@ namespace sharedrasil {
                                                 + "\\LocalLow\\IronGate\\Valheim";
         public static string CONFIG_PATH = Path.Combine(MYDOCS_PATH, "Sharedrasil");
 
+        public static Boolean firstMenu = true;
+
         public static User currentUser = new User();
         public static Sharebranch currentBranch = new Sharebranch();
     }

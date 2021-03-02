@@ -29,13 +29,33 @@ namespace sharedrasil {
 
         static string userUrl = "https://api.github.com/user";
 
-        static string repoUrl = $"{baseUrl}/{Globals.currentBranch.Url}";
-        static string repoApiUrl = $"{baseApiUrl}/repos/{Globals.currentBranch.Url}";
+        static string RepoUrl {
+            get {
+                if(Globals.currentBranch is null) {
+                    return "noUrl";
+                } else {
+                    return $"{baseUrl}/{Globals.currentBranch.Url}";
+                }
+            }
+        }
+
+        static string RepoApiUrl {
+            get {
+                if(Globals.currentBranch is null) {
+                    return "noUrl";
+                } else {
+                    return $"{baseApiUrl}/repos/{Globals.currentBranch.Url}";
+                }
+            }
+        }
 
         static string authUrl = $"{loginUrl}/oauth/access_token";
         static string codeUrl = $"{loginUrl}/device/code";
 
-        public static async Task<string> AddSharebuddy(string user, HttpClient client = null) {
+        public static async Task<string> AddCollaborator(string user, HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return null;
+
             if(client is null)
                 client = CreateBaseClient();
             
@@ -44,10 +64,10 @@ namespace sharedrasil {
             content.Headers.Add("Content-Length", "0");
 
             string message;
-            HttpResponseMessage response = await client.PutAsync($"{repoApiUrl}/collaborators/{user}", content);
+            HttpResponseMessage response = await client.PutAsync($"{RepoApiUrl}/collaborators/{user}", content);
 
             if(response.StatusCode == HttpStatusCode.Created) {
-                message = $"Successfully added share buddy! He or she must accept the invitation through the email.\nThey can also visit the repository rul directly without waiting for the email, by going to the following link:\n{repoUrl}";
+                message = $"Successfully added share buddy! He or she must accept the invitation through the email.\nThey can also visit the repository rul directly without waiting for the email, by going to the following link:\n{RepoUrl}";
             } else if (response.StatusCode == HttpStatusCode.NoContent) {
                 message = "That user is already a buddy! Make sure to check spam folders in the email.";
             } else {
@@ -58,6 +78,9 @@ namespace sharedrasil {
         }
 
         public async static Task<AccessToken> Authenticate() {
+            if(!CLIInterface.CheckConnection())
+                return null;
+
             Console.WriteLine("\nYou will receive a code, which you must enter in your browser in order to authorize sharedrasil to manage repositories on your behalf.");
 
             HttpClient client = new HttpClient();
@@ -85,7 +108,7 @@ namespace sharedrasil {
 
             Console.WriteLine("Waiting for validation...");
             Console.WriteLine("Please wait up to 10 seconds after validating.");
-            GithubTokenResponse tokenJson = AwaitForValidation(client, authJson).Result;
+            GithubTokenResponse tokenJson = await AwaitForValidation(client, authJson);
 
             AccessToken token = new AccessToken{
                 Type = tokenJson.token_type,
@@ -96,6 +119,9 @@ namespace sharedrasil {
         }
 
         public static async Task<GithubTokenResponse> AwaitForValidation(HttpClient client, GithubCodeResponse authJson) {
+            if(!CLIInterface.CheckConnection())
+                return null;
+
             do {
                 await Task.Delay(authJson.interval * 1100);
 
@@ -118,10 +144,13 @@ namespace sharedrasil {
         }
 
         public static async Task<Boolean> CheckIfExists(HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return false;
+
             if(client is null)
                 client = CreateBaseClient();
             
-            HttpResponseMessage response = await client.GetAsync(repoApiUrl);
+            HttpResponseMessage response = await client.GetAsync(RepoApiUrl);
 
             Console.Write(response.StatusCode);
 
@@ -131,6 +160,9 @@ namespace sharedrasil {
         } 
 
         public static async Task CheckPermissions(HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
             if(client is null)
                 client = CreateBaseClient();
 
@@ -139,16 +171,22 @@ namespace sharedrasil {
         }
 
         public static async Task<Boolean> CheckIfUserIsSharebuddy(string user, HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return false;
+
             if(client is null)
                 client = CreateBaseClient();
 
-            HttpResponseMessage response = await client.GetAsync($"{repoApiUrl}/collaborators/{user}");
+            HttpResponseMessage response = await client.GetAsync($"{RepoApiUrl}/collaborators/{user}");
             Boolean isBuddy = response.StatusCode == HttpStatusCode.NoContent;
 
             return isBuddy;
         }
 
         public static HttpClient CreateBaseClient() {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return null;
+
             HttpClient client = new HttpClient();
 
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
@@ -160,6 +198,9 @@ namespace sharedrasil {
 
 
         public static async Task CreateRepository(HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
             if(client is null)
                 client = CreateBaseClient();
 
@@ -204,6 +245,9 @@ namespace sharedrasil {
         }
 
         public static void Push() {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
             LocalRepo.Backup();
 
             string[] commands = {
@@ -224,6 +268,9 @@ namespace sharedrasil {
         }
 
         public static async Task Root(HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
             if(client is null)
                 client = CreateBaseClient();
 

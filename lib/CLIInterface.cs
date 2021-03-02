@@ -9,6 +9,8 @@ namespace sharedrasil {
                 PrintLogo();
                 await CheckForDeps();
                 PrintMenu();
+                if(Globals.firstMenu)
+                    Globals.firstMenu = false;
                 
                 CLICommand command = CLIParser.WaitForComand();
 
@@ -37,6 +39,12 @@ namespace sharedrasil {
                 case "checkBuddy":
                     await CheckBuddyCommand(command.Arguments);
                     break;
+                case "addUser":
+                    await AddUserCommand(command.Arguments);
+                    break;
+                case "authenticate":
+                    await AuthenticateUserCommand(command.Arguments);
+                    break;
                 default:
                     Console.WriteLine("\nSharedrasil doesn't recognize the command you typed.");
                     break;
@@ -52,8 +60,22 @@ namespace sharedrasil {
                 user = CLIParser.AskAnyString("What's the GITHUB username of your buddy?");
             }
 
-            string message = await Github.AddSharebuddy(user);
+            string message = await Github.AddCollaborator(user);
             Console.WriteLine("\n" + message);
+        }
+
+        static async Task AddUserCommand(string[] args) {
+            User user = new User();
+            Boolean created = await user.Create();
+            if(created) {
+                Globals.currentUser = user;
+                Sharebranch.SetCurrent();
+            }
+        }
+
+        static async Task AuthenticateUserCommand(string[] args) {
+            await Globals.currentUser.Authenticate();
+            Console.WriteLine("\nYou have been successfully authenticated");
         }
 
         static async Task CheckBuddyCommand(string[] args) {
@@ -106,10 +128,12 @@ namespace sharedrasil {
             await user.GetCredentials();
             Globals.currentUser = user;
 
+            Sharebranch.SetCurrent();
+
             LocalRepo localRepo = new LocalRepo();
 
             if(!localRepo.Exists) {
-                Console.WriteLine("You don't have the local repositories. Would you like to create one? (Y/N)");
+                Console.WriteLine("\nYou don't have the local repositories. Would you like to create one? (Y/N)");
                 string createRepo_Q = Console.ReadLine().ToLower();
 
                 if(createRepo_Q == "y" || createRepo_Q == "yes") {
@@ -120,6 +144,36 @@ namespace sharedrasil {
                     Console.ReadLine();
                     Environment.Exit(-1);
                 }
+            }
+        
+            if(Globals.firstMenu)
+                CheckConnectionAndToken();
+        }
+
+        public static Boolean CheckConnectionAndToken() {
+            if(CheckConnection() && CheckToken()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        public static Boolean CheckConnection() {
+            if(Connection.Check()) {
+                return true;
+            } else {
+                Console.WriteLine("\nIt seems you are not connected to the internet.");
+                Console.WriteLine("You will not be able to perform any online operation, such as pushing the sharebranch or pulling it.");
+                return false;
+            }
+        }
+
+        public static Boolean CheckToken() {
+            if(Globals.currentUser.AccessToken is null) {
+                Console.WriteLine("\nYou don't have a token. Have you authenticated?");
+                return false;
+            } else {
+                return true;
             }
         }
 
@@ -142,7 +196,7 @@ namespace sharedrasil {
             }
             else
             {
-                Console.WriteLine($"\nSigned to {Globals.currentUser.SignedInBranch.Creator}'s branch.");
+                Console.WriteLine($"\nSigned to {Globals.currentUser.SignedInBranch.Creator}'s sharebranch.");
             }
 
             Console.WriteLine(@"
@@ -156,6 +210,10 @@ You can use the following commands:
 ---- Sharebuddy related ----
     -> addBuddy
     -> checkBuddy
+
+---- User related ----
+    -> addUser
+    -> authenticate
 
 You can type help after any command to get info about it. For example:
     -> create help

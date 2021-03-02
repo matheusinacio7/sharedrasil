@@ -5,18 +5,33 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace sharedrasil {
+    public class SharebranchComparer : IEqualityComparer<Sharebranch> {
+        public bool Equals(Sharebranch x, Sharebranch y) {
+            return x.Creator.Equals(y.Creator, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public int GetHashCode(Sharebranch obj) {
+            return obj.Creator.GetHashCode();
+        }
+    }
+
     public class Sharebranch {
         public static string FilePath = Path.Combine(Globals.CONFIG_PATH, "sharebranches.json");
         
-        public static List<Sharebranch> GetBranchesList() {
-            List<Sharebranch> branchList = new List<Sharebranch>();
+        public static HashSet<Sharebranch> GetBranchesList() {
+            HashSet<Sharebranch> branchList = new HashSet<Sharebranch>(new SharebranchComparer());
 
             if(File.Exists(Sharebranch.FilePath)) {
                 string jsonString = File.ReadAllText(Sharebranch.FilePath);
-                branchList = JsonConvert.DeserializeObject<List<Sharebranch>>(jsonString);
+                
+                JsonConvert.PopulateObject(jsonString, branchList);
             } 
 
             return branchList; 
+        }
+
+        public static void SetCurrent() {
+            Globals.currentBranch = Globals.currentUser.SignedInBranch;
         }
 
         public static async Task<Sharebranch> SignIn(string creator) {
@@ -32,6 +47,7 @@ namespace sharedrasil {
             if(branchExists) {
                 newBranch.Save();
                 Globals.currentUser.SignedInBranch = newBranch;
+                Globals.currentUser.Save();
                 return newBranch;
             } else {
                 Globals.currentBranch = previousBranch;
@@ -40,23 +56,25 @@ namespace sharedrasil {
         }
 
         public string Creator {get; set;}
-        public List<string> ShareBuddies {get; set;}
+        public HashSet<string> ShareBuddies {get; set;}
         public string Url {get; set;}
-        public string AbsoluteUrl {get; set;}
+        public string FullUrl {get; set;}
 
         public void CreateRaw(string creator) {
             this.Creator = creator;
-            this.ShareBuddies = new List<string>();
+            this.ShareBuddies = new HashSet<string>();
             this.ShareBuddies.Add(creator);
             this.Url = $"{creator}/sharedrasil-{creator}-sharebranch";
-            this.AbsoluteUrl = $"https://github.com/{this.Url}";
+            this.FullUrl = $"https://github.com/{this.Url}";
         }
 
 
         public void Save() {
-            List<Sharebranch> branchList = GetBranchesList();
+            HashSet<Sharebranch> branchList = GetBranchesList();
 
-            branchList.Add(this);
+            if(!branchList.Contains(this))
+                branchList.Add(this);
+
             string jsonString = JsonConvert.SerializeObject(branchList, Formatting.Indented);
 
             using(StreamWriter sw = new StreamWriter(Sharebranch.FilePath)) {
