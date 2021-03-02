@@ -35,7 +35,7 @@ namespace sharedrasil
             Console.WriteLine("Finished local backup");
         }
 
-        public async Task Create()
+        public void Create()
         {
             if(Exists) {
                 Console.WriteLine("You already have the local repositories.");

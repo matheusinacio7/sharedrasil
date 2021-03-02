@@ -137,7 +137,7 @@ namespace sharedrasil {
                 string createRepo_Q = Console.ReadLine().ToLower();
 
                 if(createRepo_Q == "y" || createRepo_Q == "yes") {
-                    await localRepo.Create();
+                    localRepo.Create();
                 } else {
                     Console.WriteLine("Unfortunately, Sharedrasil needs local repositories to work with.");
                     Console.WriteLine("Press any key to exit...");
