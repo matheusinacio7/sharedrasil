@@ -15,5 +15,6 @@ namespace sharedrasil {
 
         public static User currentUser = new User();
         public static Sharebranch currentBranch = new Sharebranch();
+        public static Preferences preferences = new Preferences();
     }
 }

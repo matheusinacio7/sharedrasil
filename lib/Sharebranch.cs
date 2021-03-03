@@ -31,7 +31,7 @@ namespace sharedrasil {
         }
 
         public static void SetCurrent() {
-            Globals.currentBranch = Globals.currentUser.SignedInBranch;
+            Globals.currentBranch = Globals.preferences.SignedInBranch;
         }
 
         public static async Task<Sharebranch> SignIn(string creator) {
@@ -49,7 +49,7 @@ namespace sharedrasil {
 
                 newBranch.ShareBuddies = shareBuddies;
                 newBranch.Save();
-                Globals.currentUser.SignedInBranch = newBranch;
+                Globals.preferences.SignedInBranch = newBranch;
                 Globals.currentUser.Save();
                 return newBranch;
             } else {

@@ -15,7 +15,6 @@ namespace sharedrasil {
         public string Username {get;set;}
         public string Email {get;set;}
         public AccessToken AccessToken {get;set;}
-        public Sharebranch SignedInBranch {get; set;}
         public async Task Authenticate(Boolean save = true) {
             AccessToken token = await Github.Authenticate();
             this.AccessToken = token;
@@ -73,7 +72,6 @@ namespace sharedrasil {
             this.Username = user.Username;
             this.Email = user.Email;
             this.AccessToken = user.AccessToken;
-            this.SignedInBranch = user.SignedInBranch;
         }
 
         public void Save() {

@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace sharedrasil {
@@ -21,8 +23,11 @@ namespace sharedrasil {
         }
 
         static async Task ValidateCommand(CLICommand command) {
-            switch(command.Command)
+            switch(command.Command.ToLower())
             {
+                case "run":
+                    await RunCommand(command.Arguments);
+                    break;
                 case "create":
                     await CreateCommand(command.Arguments);
                     break;
@@ -127,6 +132,54 @@ namespace sharedrasil {
             }
         }
 
+        static async Task RunCommand(string[] args) {
+            Console.WriteLine("\nPulling changes from the Sharebranch");
+            Github.Pull();
+            Console.WriteLine("\nTrying to start Valheim.");
+            
+            string steamPath = Globals.preferences.SteamExePath;
+
+            if(!File.Exists(steamPath)) {
+                Console.WriteLine("\nSharedrasil could not find steam executable at the path");
+                Console.WriteLine(steamPath);
+                Console.WriteLine("If you have steam installed in another directory, please update your preferences file");
+                return;
+            }
+
+            Process steamGameProcess = new Process();
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+
+            startInfo.FileName = steamPath;
+            startInfo.Arguments = "steam://rungameid/892970";
+            startInfo.WindowStyle = ProcessWindowStyle.Maximized;
+            steamGameProcess.StartInfo = startInfo;
+
+            DateTime startTime = DateTime.Now;
+            steamGameProcess.Start();
+            Console.WriteLine("\nThe game is running...");
+
+            await Task.Delay(120000);
+            Process[] valheimProcess = Process.GetProcessesByName("valheim");
+
+            if(valheimProcess.Length > 0) {
+                valheimProcess[0].WaitForExit();
+            }
+
+            DateTime exitTime = DateTime.Now;
+            TimeSpan totalGameTime = exitTime - startTime;
+            if(totalGameTime.TotalMinutes < 10) {
+                Console.WriteLine("\nYou have played for less than 10 minutes.");
+                Console.WriteLine("The changes will not be pushed to the sharebranch.");
+                return;
+            }
+
+            Console.WriteLine("\nThe game has stopped running.");
+            Console.WriteLine("\nPushing changes to the sharebranch");
+            Github.Push();
+            Console.ReadKey();
+            
+        }
+
         // UI printing methods down below
         
         static async Task CheckForDeps() {
@@ -135,6 +188,8 @@ namespace sharedrasil {
             Globals.currentUser = user;
 
             Sharebranch.SetCurrent();
+            Preferences.Initialize();
+            Preferences.Load();
 
             LocalRepo localRepo = new LocalRepo();
 
@@ -196,17 +251,19 @@ namespace sharedrasil {
         }
 
         static void PrintMenu() {
-            if(Globals.currentUser.SignedInBranch is null)
+            if(Globals.preferences.SignedInBranch is null)
             {
                 Console.WriteLine("\nYou are not currently signed to any sharebranch.");
             }
             else
             {
-                Console.WriteLine($"\nSigned to {Globals.currentUser.SignedInBranch.Creator}'s sharebranch.");
+                Console.WriteLine($"\nSigned to {Globals.preferences.SignedInBranch.Creator}'s sharebranch.");
             }
 
             Console.WriteLine(@"
 You can use the following commands:
+
+  ===> run
 
 ---- Sharebranch related ----
     -> create
@@ -222,7 +279,7 @@ You can use the following commands:
     -> addUser
     -> authenticate
 
-You can type help after any command to get info about it. For example:
+You can type 'help' after any command to get info about it. For example:
     -> create help
                 ");
         }
