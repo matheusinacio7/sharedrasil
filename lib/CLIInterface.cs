@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 namespace sharedrasil {
     public static class CLIInterface {
-
         public static async Task MainMenuLoop() {
             do {
                 PrintLogo();
@@ -26,6 +25,9 @@ namespace sharedrasil {
             {
                 case "create":
                     await CreateCommand(command.Arguments);
+                    break;
+                case "pull":
+                    PullCommand(command.Arguments);
                     break;
                 case "push":
                     PushCommand(command.Arguments);
@@ -97,6 +99,10 @@ namespace sharedrasil {
 
         static async Task CreateCommand(string[] args) {
             await Github.CreateRepository();
+        }
+
+        static void PullCommand(string[] args) {
+            Github.Pull();
         }
 
         static void PushCommand(string[] args) {
@@ -204,6 +210,7 @@ You can use the following commands:
 
 ---- Sharebranch related ----
     -> create
+    -> pull
     -> push
     -> signIn
 

@@ -42,9 +42,12 @@ namespace sharedrasil {
 
             Globals.currentBranch = newBranch;
 
-            Boolean branchExists = await Github.CheckIfExists();
+            HashSet<string> shareBuddies = await Github.GetCollaborators();
 
-            if(branchExists) {
+            if(!(shareBuddies is null)) {
+                Github.AddOrigin();
+
+                newBranch.ShareBuddies = shareBuddies;
                 newBranch.Save();
                 Globals.currentUser.SignedInBranch = newBranch;
                 Globals.currentUser.Save();

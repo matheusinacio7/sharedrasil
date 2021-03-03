@@ -3,9 +3,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Http;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace sharedrasil {
+    class GithubCollaborator {
+        public string login {get; set;}
+    }
+
 
     public class GithubCodeResponse {
         public string device_code {get; set;}
@@ -75,6 +80,26 @@ namespace sharedrasil {
             }
 
             return message;
+        }
+
+        public static void AddOrigin() {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
+            LocalRepo.Backup();
+
+            string username = Globals.currentUser.Username;
+            string token = Globals.currentUser.AccessToken.Token;
+            string credentials = $"{username}:{token}";
+
+            string creator = Globals.currentBranch.Creator;
+
+            string[] commands = {
+                $"cd \"{Globals.LOCALREPO_PATH}\"",
+                $"git remote add origin https://{credentials}@github.com/{creator}/sharedrasil-{creator}-sharebranch",
+            };
+
+            ShellWorker.RunCommands(commands);
         }
 
         public async static Task<AccessToken> Authenticate() {
@@ -242,6 +267,45 @@ namespace sharedrasil {
             ShellWorker.RunCommands(commands);
             Push();
             Console.WriteLine("\nFinished first commit.");
+        }
+
+        public static async Task<HashSet<string>> GetCollaborators(HttpClient client = null) {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return null;
+
+            if(client is null)
+                client = CreateBaseClient();
+
+            string url = $"{RepoApiUrl}/collaborators";
+            HttpResponseMessage response = await client.GetAsync(url);
+            string body = await response.Content.ReadAsStringAsync();
+            HashSet<GithubCollaborator> bodyObj = JsonConvert.DeserializeObject<HashSet<GithubCollaborator>>(body);
+
+            HashSet<string> collaborators = new HashSet<string>();
+            
+            foreach(GithubCollaborator collab in bodyObj) {
+                collaborators.Add(collab.login);
+            }
+
+            return collaborators;
+        }
+
+        public static void Pull() {
+            if(!CLIInterface.CheckConnectionAndToken())
+                return;
+
+            LocalRepo.Backup();
+
+            string[] commands = {
+                $"cd \"{Globals.LOCALREPO_PATH}\"",
+                "git rm --cached . -r",
+                "git fetch --all",
+                "git reset --hard origin/main",
+                "git add .",
+                "git commit -m \"Fetched from Sharebranch\""
+            };
+
+            ShellWorker.RunCommands(commands);
         }
 
         public static void Push() {
