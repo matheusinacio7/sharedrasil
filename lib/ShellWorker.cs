@@ -2,8 +2,8 @@ using System.IO;
 using System.Diagnostics;
 
 namespace sharedrasil {
-    public static class ShellWorker {
-        public static void RunCommands(string[] commands) {
+    public class ShellWorker {
+        public void RunCommands(string[] commands) {
             Process p = new Process();
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
@@ -22,8 +22,6 @@ namespace sharedrasil {
             foreach(string command in commands) {
                 sw.WriteLine(command);
             }
-
-            // Logging.WriteFromStream(sr);
 
             sw.Close();
             p.WaitForExit();

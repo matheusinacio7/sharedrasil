@@ -9,8 +9,12 @@ namespace sharedrasil {
         public string Token {get; set;}
     }
 
-    public class User {
-        public static string FilePath = Path.Combine(Globals.CONFIG_PATH, "user.json");
+    public class User : ConfigFile {
+        public override string PATH {
+            get {
+                return Path.Combine(Globals.CONFIG_PATH, "user.json");
+            }
+        }
 
         public string Username {get;set;}
         public string Email {get;set;}
@@ -25,7 +29,7 @@ namespace sharedrasil {
         }
 
         public async Task<Boolean> Create() {
-            if(File.Exists(User.FilePath)) {
+            if(File.Exists(Globals.currentUser.PATH)) {
                 Console.WriteLine("There is already an user for sharedrasil in your local machine.");
                 Boolean wantsToContinue = CLIParser.AskYesOrNo("Would you like to delete it and create another one?");
 
@@ -33,7 +37,7 @@ namespace sharedrasil {
                     return false;
                 }
 
-                File.Delete(User.FilePath);
+                File.Delete(Globals.currentUser.PATH);
             }
 
             Console.WriteLine("\nPlease, enter your github username and email.");
@@ -44,8 +48,8 @@ namespace sharedrasil {
 
             this.Save();
 
-            if(File.Exists(User.FilePath)) {
-               Console.WriteLine($"\nSuccessfully created user. You can change your user by editing {User.FilePath}.");
+            if(File.Exists(Globals.currentUser.PATH)) {
+               Console.WriteLine($"\nSuccessfully created user. You can change your user by editing {Globals.currentUser.PATH}.");
                Console.WriteLine("You can also run 'add user' command at any time to go through this proccess again.");
                 return true;
             }
@@ -54,7 +58,7 @@ namespace sharedrasil {
         }
 
         public async Task GetCredentials() {
-            if(!File.Exists(User.FilePath)) {
+            if(!File.Exists(Globals.currentUser.PATH)) {
                 Console.WriteLine("You don't have a user created.");
                 Boolean wantsToCreate = CLIParser.AskYesOrNo("Would you like to create one now?");
 
@@ -66,21 +70,12 @@ namespace sharedrasil {
                 }
             }
             
-            string jsonString = File.ReadAllText(User.FilePath);
+            string jsonString = File.ReadAllText(Globals.currentUser.PATH);
             User user = JsonConvert.DeserializeObject<User>(jsonString);
 
             this.Username = user.Username;
             this.Email = user.Email;
             this.AccessToken = user.AccessToken;
-        }
-
-        public void Save() {
-            string json = JsonConvert.SerializeObject(this, Formatting.Indented);
-
-            using(StreamWriter sw = new StreamWriter(FilePath)) {
-                sw.Write(json);
-                sw.Close();
-            }
         }
     }
 }

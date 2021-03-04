@@ -31,13 +31,13 @@ namespace sharedrasil {
         static string baseUrl = "https://github.com";
         static string baseApiUrl = "https://api.github.com";
         static string loginUrl = "https://github.com/login";
-
         static string userUrl = "https://api.github.com/user";
 
         static string RepoUrl {
             get {
                 if(Globals.currentBranch is null) {
-                    return "noUrl";
+                    string creator = Globals.currentUser.Username;
+                    return $"{baseUrl}/{creator}/sharedrasil-{creator}-sharebranch";
                 } else {
                     return $"{baseUrl}/{Globals.currentBranch.Url}";
                 }
@@ -47,7 +47,8 @@ namespace sharedrasil {
         static string RepoApiUrl {
             get {
                 if(Globals.currentBranch is null) {
-                    return "noUrl";
+                    string creator = Globals.currentUser.Username;
+                    return $"{baseApiUrl}/repos/{creator}/sharedrasil-{creator}-sharebranch";
                 } else {
                     return $"{baseApiUrl}/repos/{Globals.currentBranch.Url}";
                 }
@@ -99,7 +100,9 @@ namespace sharedrasil {
                 $"git remote add origin https://{credentials}@github.com/{creator}/sharedrasil-{creator}-sharebranch",
             };
 
-            ShellWorker.RunCommands(commands);
+            ShellWorker shellWorker = new ShellWorker();
+
+            shellWorker.RunCommands(commands);
         }
 
         public async static Task<AccessToken> Authenticate() {
@@ -231,6 +234,7 @@ namespace sharedrasil {
 
             if(await CheckIfExists(client)) {
                 Console.WriteLine("\nThe remote repository already exists.");
+                return;
             }
 
             string content = JsonConvert.SerializeObject(new
@@ -247,6 +251,9 @@ namespace sharedrasil {
             sharebranch.CreateRaw(Globals.currentUser.Username);
             sharebranch.Save();
             Console.WriteLine("\nCreated sharebranch local info and saved to file");
+            Globals.currentBranch = sharebranch;
+            Globals.preferences.SignedInBranch = sharebranch;
+            Globals.preferences.Save();
 
             if(Globals.currentBranch is null) {
                 Globals.currentBranch = sharebranch;
@@ -261,10 +268,14 @@ namespace sharedrasil {
 
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
-                $"git remote add origin https://{credentials}@github.com/{username}/sharedrasil-{username}-sharebranch"
+                $"git remote add origin https://{credentials}@github.com/{username}/sharedrasil-{username}-sharebranch",
+                "git checkout -b remote",
+                "git checkout local",
             };
 
-            ShellWorker.RunCommands(commands);
+            ShellWorker shellWorker = new ShellWorker();
+
+            shellWorker.RunCommands(commands);
             Push();
             Console.WriteLine("\nFinished first commit.");
         }
@@ -298,14 +309,17 @@ namespace sharedrasil {
 
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
+                "git checkout remote",
                 "git rm --cached . -r",
                 "git fetch --all",
                 "git reset --hard origin/main",
                 "git add .",
-                "git commit -m \"Fetched from Sharebranch\""
+                "git commit -m \"Fetched from Sharebranch\"",
+                "git checkout local",
             };
 
-            ShellWorker.RunCommands(commands);
+            ShellWorker shellWorker = new ShellWorker();
+            shellWorker.RunCommands(commands);
         }
 
         public static void Push() {
@@ -316,6 +330,7 @@ namespace sharedrasil {
 
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
+                "git checkout remote",
                 "git checkout --orphan temp",
                 "git rm --cached . -r",
                 "git add ./worlds ./README.md",
@@ -323,12 +338,14 @@ namespace sharedrasil {
                 "git push -f origin temp:main",
                 "git add .",
                 "git commit -m \"trash\"",
-                "git checkout main",
+                "git checkout remote",
                 "git branch -D temp",
                 "git add .",
+                "git checkout local",
             };
 
-            ShellWorker.RunCommands(commands);
+            ShellWorker shellWorker = new ShellWorker();
+            shellWorker.RunCommands(commands);
         }
 
         public static async Task Root(HttpClient client = null) {

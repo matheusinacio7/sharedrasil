@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 
 namespace sharedrasil
 {
@@ -23,21 +24,23 @@ namespace sharedrasil
         
 
         public static void Backup() {
+            Console.WriteLine("\nDoing local backup.");
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
                 "git add .",
                 $"git commit -m \"Local backup\"",
             };
 
-            ShellWorker.RunCommands(commands);
-            Console.WriteLine("Finished local backup");
+            ShellWorker shellWorker = new ShellWorker();
+            shellWorker.RunCommands(commands);
+            Console.WriteLine("\nFinished local backup");
         }
 
         public void Create()
         {
             if(Exists) {
-                Console.WriteLine("You already have the local repositories.");
-                bool wantsToDeleteTheRepository = CLIParser.AskYesOrNo("Do you want to remove them? This will destroy all backups, but not your current files.");
+                Console.WriteLine("You already have the local repository.");
+                bool wantsToDeleteTheRepository = CLIParser.AskYesOrNo("Do you want to remove it? This will destroy all backups, but not your current files.");
                 
                 if(!wantsToDeleteTheRepository) {
                     return;
@@ -51,12 +54,16 @@ namespace sharedrasil
             Console.WriteLine($"\nCreating a new Git repository at {Globals.LOCALREPO_PATH}");
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
-                "git init",
+                "git init -b remote",
+                "git checkout -b local",
+                "git add .",
+                "git commit -m \"First backup\"",
                 $"git config user.name \"{Globals.currentUser.Username}\"",
                 $"git config user.email \"{Globals.currentUser.Email}\"",
             };
 
-            ShellWorker.RunCommands(commands);
+            ShellWorker shellWorker = new ShellWorker();
+            shellWorker.RunCommands(commands);
 
             if(!Exists) {
                 Console.WriteLine($"Could not create a Git repository at \"{Globals.LOCALREPO_PATH}\". Please, check if: \n- You have Git installed;\n- The app has permission to access your command prompt, git, and the folder");
@@ -78,8 +85,14 @@ namespace sharedrasil
             Console.WriteLine("Successfully created repository.");
         }
 
-        public static void Commit() {
-            
+        public static void DoRegularBackups(CancellationToken cancellationToken) {
+            do {
+                Thread.Sleep(Globals.preferences.BackupInterval);
+                if(cancellationToken.IsCancellationRequested) {
+                    return;
+                }
+                Backup();
+            } while(true);
         }
 
     }

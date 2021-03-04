@@ -126,6 +126,10 @@
             "assemblyVersion": "5.0.0.0",
             "fileVersion": "5.0.321.7212"
           },
+          "System.Net.Ping.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.321.7212"
+          },
           "System.Net.Primitives.dll": {
             "assemblyVersion": "5.0.0.0",
             "fileVersion": "5.0.321.7212"

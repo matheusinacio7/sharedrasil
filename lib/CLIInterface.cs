@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace sharedrasil {
@@ -156,19 +157,28 @@ namespace sharedrasil {
 
             DateTime startTime = DateTime.Now;
             steamGameProcess.Start();
+
             Console.WriteLine("\nThe game is running...");
 
-            await Task.Delay(120000);
+            await Task.Delay(600000);
+            CancellationTokenSource source = new CancellationTokenSource();
+            CancellationToken token = source.Token;
+
+            Thread backupThread = new Thread(() => LocalRepo.DoRegularBackups(token));
+            backupThread.Start();
+
             Process[] valheimProcess = Process.GetProcessesByName("valheim");
 
             if(valheimProcess.Length > 0) {
                 valheimProcess[0].WaitForExit();
             }
+            
+            source.Cancel();
 
             DateTime exitTime = DateTime.Now;
             TimeSpan totalGameTime = exitTime - startTime;
-            if(totalGameTime.TotalMinutes < 10) {
-                Console.WriteLine("\nYou have played for less than 10 minutes.");
+            if(totalGameTime.TotalMinutes < Globals.preferences.MinimumPlayTime) {
+                Console.WriteLine($"\nYou have played for less than {Globals.preferences.MinimumPlayTime} minutes.");
                 Console.WriteLine("The changes will not be pushed to the sharebranch.");
                 return;
             }
@@ -176,8 +186,8 @@ namespace sharedrasil {
             Console.WriteLine("\nThe game has stopped running.");
             Console.WriteLine("\nPushing changes to the sharebranch");
             Github.Push();
-            Console.ReadKey();
-            
+            Console.WriteLine("\nPress any key to go back to the main menu.");
+            Console.ReadKey();          
         }
 
         // UI printing methods down below
@@ -189,7 +199,8 @@ namespace sharedrasil {
 
             Sharebranch.SetCurrent();
             Preferences.Initialize();
-            Preferences.Load();
+            Settings.Initialize();
+            VersionControl.Initialize();
 
             LocalRepo localRepo = new LocalRepo();
 
@@ -199,6 +210,8 @@ namespace sharedrasil {
 
                 if(createRepo_Q == "y" || createRepo_Q == "yes") {
                     localRepo.Create();
+                    Console.WriteLine("\nPress any key to go back to the main menu.");
+                    Console.ReadKey();
                 } else {
                     Console.WriteLine("Unfortunately, Sharedrasil needs local repositories to work with.");
                     Console.WriteLine("Press any key to exit...");
@@ -239,14 +252,14 @@ namespace sharedrasil {
         }
 
         static void PrintLogo() {
-            Console.WriteLine(@"
+            Console.WriteLine($@"
             ███████ ██   ██  █████  ██████  ███████ ██████  ██████   █████  ███████ ██ ██      
             ██      ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██ ██      ██ ██      
             ███████ ███████ ███████ ██████  █████   ██   ██ ██████  ███████ ███████ ██ ██      
                  ██ ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██      ██ ██ ██      
             ███████ ██   ██ ██   ██ ██   ██ ███████ ██████  ██   ██ ██   ██ ███████ ██ ███████
 
-                                                                                 version 0.1.0 
+                                                                                 version {Globals.CURRENT_VERSION} 
             ");
         }
 

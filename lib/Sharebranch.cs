@@ -15,14 +15,18 @@ namespace sharedrasil {
         }
     }
 
-    public class Sharebranch {
-        public static string FilePath = Path.Combine(Globals.CONFIG_PATH, "sharebranches.json");
+    public class Sharebranch : ConfigFile {
+        public override string PATH {
+            get {
+                return Path.Combine(Globals.CONFIG_PATH, "sharebranches.json");
+            }
+        }
         
         public static HashSet<Sharebranch> GetBranchesList() {
             HashSet<Sharebranch> branchList = new HashSet<Sharebranch>(new SharebranchComparer());
 
-            if(File.Exists(Sharebranch.FilePath)) {
-                string jsonString = File.ReadAllText(Sharebranch.FilePath);
+            if(File.Exists(Globals.currentBranch.PATH)) {
+                string jsonString = File.ReadAllText(Globals.currentBranch.PATH);
                 
                 JsonConvert.PopulateObject(jsonString, branchList);
             } 
@@ -70,21 +74,5 @@ namespace sharedrasil {
             this.Url = $"{creator}/sharedrasil-{creator}-sharebranch";
             this.FullUrl = $"https://github.com/{this.Url}";
         }
-
-
-        public void Save() {
-            HashSet<Sharebranch> branchList = GetBranchesList();
-
-            if(!branchList.Contains(this))
-                branchList.Add(this);
-
-            string jsonString = JsonConvert.SerializeObject(branchList, Formatting.Indented);
-
-            using(StreamWriter sw = new StreamWriter(Sharebranch.FilePath)) {
-                sw.Write(jsonString);
-                sw.Close();
-            }
-        }
-
     }
 }
