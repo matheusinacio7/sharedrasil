@@ -158,36 +158,37 @@ namespace sharedrasil {
             DateTime startTime = DateTime.Now;
             steamGameProcess.Start();
 
-            Console.WriteLine("\nThe game is running...");
+            Process valheimProcess = await ValheimProcess.Get();
 
-            await Task.Delay(600000);
+            if(valheimProcess is null) {
+                Console.WriteLine("\nSharedrasil could not start Valheim. Make sure you have the correct steam path.");
+                Console.ReadKey();
+                return;
+            }
+
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
 
             Thread backupThread = new Thread(() => LocalRepo.DoRegularBackups(token));
             backupThread.Start();
 
-            Process[] valheimProcess = Process.GetProcessesByName("valheim");
+            Console.WriteLine("\nThe game is running..");
 
-            if(valheimProcess.Length > 0) {
-                valheimProcess[0].WaitForExit();
-            }
+            valheimProcess.WaitForExit();
             
             source.Cancel();
 
             DateTime exitTime = DateTime.Now;
             TimeSpan totalGameTime = exitTime - startTime;
-            if(totalGameTime.TotalMinutes < Globals.preferences.MinimumPlayTime) {
-                Console.WriteLine($"\nYou have played for less than {Globals.preferences.MinimumPlayTime} minutes.");
+            if(totalGameTime.TotalMilliseconds < Globals.preferences.MinimumPlayTime) {
+                Console.WriteLine($"\nYou have played for less than {Globals.preferences.MinimumPlayTime / 60000} minutes.");
                 Console.WriteLine("The changes will not be pushed to the sharebranch.");
                 return;
             }
 
             Console.WriteLine("\nThe game has stopped running.");
             Console.WriteLine("\nPushing changes to the sharebranch");
-            Github.Push();
-            Console.WriteLine("\nPress any key to go back to the main menu.");
-            Console.ReadKey();          
+            Github.Push();        
         }
 
         // UI printing methods down below
@@ -259,7 +260,7 @@ namespace sharedrasil {
                  ██ ██   ██ ██   ██ ██   ██ ██      ██   ██ ██   ██ ██   ██      ██ ██ ██      
             ███████ ██   ██ ██   ██ ██   ██ ███████ ██████  ██   ██ ██   ██ ███████ ██ ███████
 
-                                                                                 version {Globals.CURRENT_VERSION} 
+                                                                             version {Globals.CURRENT_VERSION}
             ");
         }
 

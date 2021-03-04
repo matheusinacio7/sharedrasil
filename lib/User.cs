@@ -16,8 +16,8 @@ namespace sharedrasil {
             }
         }
 
-        public string Username {get;set;}
-        public string Email {get;set;}
+        public string Username {get; set;}
+        public string Email {get; set;}
         public AccessToken AccessToken {get;set;}
         public async Task Authenticate(Boolean save = true) {
             AccessToken token = await Github.Authenticate();
