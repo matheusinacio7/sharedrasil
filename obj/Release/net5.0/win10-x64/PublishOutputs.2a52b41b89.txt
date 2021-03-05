@@ -1,0 +1,6 @@
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\sharedrasil.pdb
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\clrcompression.dll
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\clrjit.dll
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\coreclr.dll
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\mscordaccore.dll
+C:\Users\mrina\Desktop\sharedrasil\bin\RELEASE\net5.0\win10-x64\publish\sharedrasil.exe

@@ -54,12 +54,12 @@ namespace sharedrasil
             Console.WriteLine($"\nCreating a new Git repository at {Globals.LOCALREPO_PATH}");
             string[] commands = {
                 $"cd \"{Globals.LOCALREPO_PATH}\"",
+                $"git config user.name \"{Globals.currentUser.Username}\"",
+                $"git config user.email \"{Globals.currentUser.Email}\"",
                 "git init -b remote",
                 "git checkout -b local",
                 "git add .",
                 "git commit -m \"First backup\"",
-                $"git config user.name \"{Globals.currentUser.Username}\"",
-                $"git config user.email \"{Globals.currentUser.Email}\"",
             };
 
             ShellWorker shellWorker = new ShellWorker();
