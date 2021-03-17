@@ -10,17 +10,19 @@ namespace sharedrasil {
             startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.FileName = "cmd.exe";
             startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = false;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
             startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
 
             p.StartInfo = startInfo;
             p.Start();
+            p.BeginErrorReadLine();
+            p.BeginOutputReadLine();
 
             StreamWriter sw = p.StandardInput;
-            StreamReader sr = p.StandardOutput;
 
             foreach(string command in commands) {
-                p.WaitForInputIdle();
                 sw.WriteLine(command);
             }
 

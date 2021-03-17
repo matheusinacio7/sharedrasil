@@ -64,6 +64,8 @@ namespace sharedrasil {
 
                 if(!wantsToCreate) {
                     Console.WriteLine("\nUnfortunately, Sharedrasil needs a local user in order to comunicate with Github");
+                    Console.ReadKey();
+                    Environment.Exit(-1);
                     return;
                 } else {
                     await this.Create();

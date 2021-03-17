@@ -4,7 +4,7 @@ using System.IO;
 namespace sharedrasil {
 
     public static class Globals {
-        public static Version CURRENT_VERSION = new Version("0.1.2.8");
+        public static Version CURRENT_VERSION = new Version("0.1.2.9");
         public static string MYDOCS_PATH = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public static string LOCALREPO_PATH = Directory.GetParent(
                                                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
